@@ -1,0 +1,55 @@
+const mongoose = require('mongoose');
+
+const gameSchema = new mongoose.Schema(
+    {
+        roomid:{
+            type:String
+            ,required:true
+            ,unique:true
+        },
+        players:{
+            white:{
+                type:mongoose.Schema.Types.ObjectId,
+                ref:"User",
+                required:true
+            },
+            black:{
+                type:mongoose.Schema.Types.ObjectId,
+                ref:'User',
+                required:true
+            }
+        },
+        fen:{
+            type:String,
+            required:true
+        },
+        moveList:{
+            type:[String],
+            default:[]
+        },
+        lastMove:{
+            from:String,
+            to:String
+        },
+        turn:{
+            type:String,
+            enum:['w','b'],
+            required:true
+        },
+        isCheck:{
+            type:Boolean,
+            default:false
+        },
+        status:{
+            type:String,
+            enum:['active','checkmate','resigned','draw','abandoned'],
+            default:"active"
+        },
+        winner:{
+            type:String,
+            enum:["w","b",null],
+            default:null
+        }
+    },{timestamps:true}
+)
+module.exports = mongoose.model("GameModel",gameSchema);

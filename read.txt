@@ -1,0 +1,75 @@
+
+{/*
+  
+  const express = require("express")
+const http = require("http")
+const {Server} = require("socket.io")
+const dotenv = require("dotenv")
+const {GameManager} = require("./gamemanager.js")
+
+dotenv.config();
+
+const app = express();
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: { origin: "*" }
+});
+
+const gm = new GameManager(io);
+
+io.on("connection", (socket) => {
+  console.log("Client connected:", socket.id);
+
+  socket.on("play_game", () => gm.addPlayer(socket));
+
+  socket.on("disconnect", () =>
+    {gm.handleDisconnect(socket)
+        console.log("hey wait game is starting ")
+    } );
+});
+
+const PORT = process.env.PORT || 8000;
+server.listen(PORT, () =>
+  console.log(`Server running on http://localhost:${PORT}`)
+);
+
+  
+  */}
+
+
+
+const express = require("express")
+const http = require("http")
+const Websockt = require("websocket.io")
+const {GameManager} = require("./gamemanager.js")
+const app = express()
+const server = http.createServer(app)
+const {Game} = require("./game.js")
+const wss = Websockt.attach(server)
+const gm = new GameManager(wss)
+const game = new Game()
+wss.on("connection",ws=>{
+  console.log("client connected")
+  ws.send(JSON.stringify({message:"welcome to chess websocket"}))
+  ws.on("message", data=>{
+    const msg = JSON.parse(data.toString())
+    if(msg.event=== "play_game")
+    {
+      console.log("lets go lets play the game ")
+      gm.addPlayer(ws)
+    }
+    if(msg.event=== "make_move")
+    {
+      console.log("you make a move ")
+      game.handleMove(ws,msg.move)
+    }
+  })
+  ws.on("close",(data)=>{
+    gm.handleDisconnect(ws)
+  })
+})
+const PORT = process.env.PORT || 8080
+server.listen(PORT,()=>{
+  console.log("the server is live on ",PORT)
+})
