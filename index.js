@@ -6,11 +6,12 @@ const connectDB = require("./config/db.js")
 const cors = require('cors')
 const authroutes = require('./Routes/authroutes.js')
 const { error } = require("console")
+const { connectProducer } = require("./kafka/producer.js")
 require("dotenv").config()
 const app = express()
 
 
-//using middleware 
+//using middleware
 app.use(cors())
 app.use(express.json())
 
@@ -23,6 +24,7 @@ const wss = new WebSocketServer({server})
 // async function to connect DB and for Gamereovery
 async function startServer(){
   await connectDB()
+  await connectProducer()
   const gm = new GameManager(wss)
   await gm.Gamerecovery()
   // on connection to the websocket 

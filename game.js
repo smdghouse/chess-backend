@@ -1,8 +1,9 @@
 //import { Chess } from "chess.js";
 const { Chess } = require("chess.js")
-const GameModel = require("./models/moves.js")
+const GameModel = require("./models/moves.js");
+const { sendMove } = require("./kafka/producer.js");
 class Game {
-    constructor(white, black, roomId, whiteid, blackid, manager, isRecovery=false) {
+    constructor(white, black, roomId, whiteid, blackid, manager, isRecovery = false) {
         this.white = white;
         this.black = black;
         this.roomId = roomId;
@@ -85,6 +86,17 @@ class Game {
         this.movelist.push(move.san)
         this.checkcolour = this.chess.inCheck()
         //update the database 
+        await sendMove({
+            gameId: this.roomId,
+            moveslist: this.movelist,
+            move:move,
+            from: move.from,
+            to: move.to,
+            fen: this.chess.fen(),
+            player: move.color === "w" ? "white" : "black",
+            isCheck : this.chess.isCheck(),
+            timestamp: Date.now()
+        })
         await GameModel.findOneAndUpdate(
             { roomid: this.roomId },
             {
@@ -98,10 +110,10 @@ class Game {
                 }
             }
         )
-        // send to everyone else (opponent + spectators)
+        // send to white player
         this.white.send(JSON.stringify({ check: this.chess.isCheck(), type: "move_made", message: "you just made a move", ...update }));
 
-        // send to the player who moved
+        // sending to the black player
         this.black.send(JSON.stringify({ check: this.chess.isCheck(), type: "move_made", message: "you just made a move", ...update }));
 
         // GAME OVER LOGIC
